@@ -70,19 +70,16 @@ const Header = () => {
         <Link to="/dashboard">Employees</Link>
         <Link to="/attendance">Attendance</Link>
         <Link to="/leave">Time Off</Link>
-        <Link to="/documents">Documents</Link>
-        {isAdmin && <Link to="/salary-structure">Salary Structure</Link>}
-        {isAdmin && <Link to="/payroll">Payroll</Link>}
         {isAdmin && <Link to="/create-user">Create User</Link>}
       </nav>
 
       <div className="avatar-dropdown">
         <div
           onClick={handleAttendanceToggle}
-          title={isCheckedIn ? 'Click to Check Out' : 'Click to Check In'}
+          title={isCheckedIn ? 'Checked In - Click to Check Out' : 'Click to Check In'}
           style={{
-            width: '40px',
-            height: '40px',
+            width: '45px',
+            height: '45px',
             borderRadius: '50%',
             backgroundColor: isCheckedIn ? '#10b981' : '#ef4444',
             display: 'flex',
@@ -91,10 +88,10 @@ const Header = () => {
             cursor: loading ? 'not-allowed' : 'pointer',
             marginRight: '1rem',
             color: 'white',
-            fontSize: '1.2rem',
+            fontSize: '1.3rem',
             fontWeight: 'bold',
             border: '3px solid white',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+            boxShadow: isCheckedIn ? '0 0 15px rgba(16, 185, 129, 0.5)' : '0 0 15px rgba(239, 68, 68, 0.5)',
             transition: 'all 0.3s ease',
             opacity: loading ? 0.6 : 1
           }}

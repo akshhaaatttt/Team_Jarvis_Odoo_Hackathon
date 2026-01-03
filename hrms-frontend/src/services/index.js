@@ -15,6 +15,11 @@ export const authService = {
     return response.data;
   },
 
+  signUp: async (data) => {
+    const response = await api.post('/auth/signup', data);
+    return response.data;
+  },
+
   logout: () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
@@ -49,6 +54,26 @@ export const employeeService = {
 
   createUser: async (data) => {
     const response = await api.post('/employees', data);
+    return response.data;
+  },
+
+  signUp: async (data) => {
+    const response = await api.post('/auth/signup', data);
+    return response.data;
+  },
+
+  getPendingSignups: async () => {
+    const response = await api.get('/auth/pending-signups');
+    return response.data;
+  },
+
+  approveSignup: async (id) => {
+    const response = await api.post(`/auth/approve-signup/${id}`);
+    return response.data;
+  },
+
+  rejectSignup: async (id) => {
+    const response = await api.delete(`/auth/reject-signup/${id}`);
     return response.data;
   }
 };

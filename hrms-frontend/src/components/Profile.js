@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Header from './Header';
-import { employeeService, authService } from '../services';
+import { employeeService, authService, documentService, salaryStructureService, payrollService } from '../services';
 
 const Profile = () => {
   const [profile, setProfile] = useState(null);
@@ -12,9 +12,56 @@ const Profile = () => {
   const user = authService.getCurrentUser();
   const isAdmin = user?.role === 'admin' || user?.role === 'hr';
 
+  // Documents state
+  const [documents, setDocuments] = useState([]);
+  const [showUpload, setShowUpload] = useState(false);
+  const [uploadData, setUploadData] = useState({
+    document_type: 'certificate',
+    description: '',
+    file: null
+  });
+
+  // Salary Slip state
+  const currentDate = new Date();
+  const [selectedMonth, setSelectedMonth] = useState(currentDate.getMonth() + 1);
+  const [selectedYear, setSelectedYear] = useState(currentDate.getFullYear());
+  const [salarySlip, setSalarySlip] = useState(null);
+  const [slipLoading, setSlipLoading] = useState(false);
+
   useEffect(() => {
     loadProfile();
+    loadDocuments();
+    if (!isAdmin) {
+      loadSalarySlip();
+    }
   }, []);
+
+  useEffect(() => {
+    if (!isAdmin && activeTab === 'salary-slip') {
+      loadSalarySlip();
+    }
+  }, [selectedMonth, selectedYear, activeTab]);
+
+  const loadSalarySlip = async () => {
+    try {
+      setSlipLoading(true);
+      const data = await payrollService.getSalarySlip(selectedMonth, selectedYear);
+      setSalarySlip(data);
+    } catch (error) {
+      setSalarySlip(null);
+    } finally {
+      setSlipLoading(false);
+    }
+  };
+
+  const loadDocuments = async () => {
+    try {
+      const data = await documentService.getDocuments();
+      setDocuments(data);
+    } catch (error) {
+      console.error('Failed to load documents:', error);
+    }
+  };
 
   const loadProfile = async () => {
     try {
@@ -51,13 +98,64 @@ const Profile = () => {
 
   const handleSaveProfile = async () => {
     try {
-      await employeeService.updateEmployee(profile.id, editData);
+      await employeeService.updateProfile(profile.id, editData);
       setMessage('Profile updated successfully');
       setTimeout(() => setMessage(''), 3000);
       setIsEditing(false);
       loadProfile();
     } catch (error) {
       setMessage(error.response?.data?.error || 'Failed to update profile');
+      setTimeout(() => setMessage(''), 5000);
+    }
+  };
+
+  const handleUploadDocument = async (e) => {
+    e.preventDefault();
+    const formData = new FormData();
+    formData.append('document_type', uploadData.document_type);
+    formData.append('description', uploadData.description);
+    formData.append('file', uploadData.file);
+
+    try {
+      await documentService.uploadDocument(formData);
+      setMessage('Document uploaded successfully');
+      setTimeout(() => setMessage(''), 3000);
+      setShowUpload(false);
+      setUploadData({ document_type: 'certificate', description: '', file: null });
+      loadDocuments();
+    } catch (error) {
+      setMessage(error.response?.data?.error || 'Upload failed');
+      setTimeout(() => setMessage(''), 5000);
+    }
+  };
+
+  const handleDeleteDocument = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this document?')) return;
+
+    try {
+      await documentService.deleteDocument(id);
+      setMessage('Document deleted successfully');
+      setTimeout(() => setMessage(''), 3000);
+      loadDocuments();
+    } catch (error) {
+      setMessage(error.response?.data?.error || 'Delete failed');
+      setTimeout(() => setMessage(''), 5000);
+    }
+  };
+
+  const handleDownloadDocument = async (id, fileName) => {
+    try {
+      const blob = await documentService.downloadDocument(id);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      setMessage('Download failed');
       setTimeout(() => setMessage(''), 5000);
     }
   };
@@ -149,10 +247,28 @@ const Profile = () => {
                   Private Info
                 </button>
                 <button 
+                  className={`tab ${activeTab === 'documents' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('documents')}
+                >
+                  Documents
+                </button>
+                <button 
                   className={`tab ${activeTab === 'salary' ? 'active' : ''}`}
                   onClick={() => setActiveTab('salary')}
                 >
                   Salary Info
+                </button>
+                <button 
+                  className={`tab ${activeTab === 'salary-management' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('salary-management')}
+                >
+                  Salary Management
+                </button>
+                <button 
+                  className={`tab ${activeTab === 'payroll' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('payroll')}
+                >
+                  Payroll
                 </button>
               </>
             ) : (
@@ -164,10 +280,16 @@ const Profile = () => {
                   Personal Info
                 </button>
                 <button 
-                  className={`tab ${activeTab === 'security' ? 'active' : ''}`}
-                  onClick={() => setActiveTab('security')}
+                  className={`tab ${activeTab === 'documents' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('documents')}
                 >
-                  Security
+                  Documents
+                </button>
+                <button 
+                  className={`tab ${activeTab === 'salary-slip' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('salary-slip')}
+                >
+                  Salary Slip
                 </button>
               </>
             )}
@@ -380,7 +502,259 @@ const Profile = () => {
               </div>
             </div>
           )}
+
+          {/* Salary Management Tab - Admin Only */}
+          {isAdmin && activeTab === 'salary-management' && (
+            <div className="tab-content">
+              <h3 style={{marginBottom: '1.5rem', color: '#1f2937'}}>Salary Structure Management</h3>
+              <p style={{marginBottom: '1rem'}}>
+                Manage employee salary structures, components, and revisions.
+              </p>
+              <button 
+                className="btn btn-primary"
+                onClick={() => window.location.href = '/salary-structure'}
+              >
+                Go to Salary Structure Page
+              </button>
+            </div>
+          )}
+
+          {/* Payroll Tab - Admin Only */}
+          {isAdmin && activeTab === 'payroll' && (
+            <div className="tab-content">
+              <h3 style={{marginBottom: '1.5rem', color: '#1f2937'}}>Payroll Management</h3>
+              <p style={{marginBottom: '1rem'}}>
+                Generate payroll, approve salary slips, and manage monthly payroll reports.
+              </p>
+              <button 
+                className="btn btn-primary"
+                onClick={() => window.location.href = '/payroll'}
+              >
+                Go to Payroll Page
+              </button>
+            </div>
+          )}
+
+          {/* Salary Slip Tab - Employee Only */}
+          {!isAdmin && activeTab === 'salary-slip' && (
+            <div className="tab-content">
+              <div style={{display: 'flex', gap: '1rem', marginBottom: '1.5rem', alignItems: 'center'}}>
+                <div>
+                  <label style={{display: 'block', marginBottom: '0.5rem', fontWeight: 600}}>Month</label>
+                  <select 
+                    value={selectedMonth}
+                    onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
+                    style={{padding: '0.5rem', borderRadius: '4px', border: '1px solid #ddd'}}
+                  >
+                    {['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'].map((month, idx) => (
+                      <option key={idx} value={idx + 1}>{month}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label style={{display: 'block', marginBottom: '0.5rem', fontWeight: 600}}>Year</label>
+                  <select 
+                    value={selectedYear}
+                    onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+                    style={{padding: '0.5rem', borderRadius: '4px', border: '1px solid #ddd'}}
+                  >
+                    {[2024, 2025, 2026, 2027].map(year => (
+                      <option key={year} value={year}>{year}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {slipLoading && <p>Loading salary slip...</p>}
+
+              {!slipLoading && !salarySlip && (
+                <div style={{padding: '2rem', textAlign: 'center', background: '#f3f4f6', borderRadius: '8px'}}>
+                  <p style={{color: '#6b7280', margin: 0}}>No salary slip found for this period</p>
+                </div>
+              )}
+
+              {!slipLoading && salarySlip && (
+                <div style={{background: '#f9fafb', padding: '1.5rem', borderRadius: '8px'}}>
+                  <h3 style={{marginBottom: '1rem', color: '#1f2937'}}>Salary Slip - {['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'][selectedMonth - 1]} {selectedYear}</h3>
+                  
+                  <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', marginTop: '1.5rem'}}>
+                    <div>
+                      <h4 style={{marginBottom: '1rem', color: '#374151'}}>Earnings</h4>
+                      <div className="info-item">
+                        <label>Basic Salary</label>
+                        <div className="value">₹{salarySlip.basic_salary?.toLocaleString()}</div>
+                      </div>
+                      <div className="info-item">
+                        <label>HRA</label>
+                        <div className="value">₹{salarySlip.hra?.toLocaleString()}</div>
+                      </div>
+                      <div className="info-item">
+                        <label>Standard Allowance</label>
+                        <div className="value">₹{salarySlip.std_allowance?.toLocaleString()}</div>
+                      </div>
+                      <div className="info-item">
+                        <label>Performance Bonus</label>
+                        <div className="value">₹{salarySlip.performance_bonus?.toLocaleString()}</div>
+                      </div>
+                      <div className="info-item">
+                        <label>LTA</label>
+                        <div className="value">₹{salarySlip.lta?.toLocaleString()}</div>
+                      </div>
+                      <div className="info-item">
+                        <label>Fixed Allowance</label>
+                        <div className="value">₹{salarySlip.fixed_allowance?.toLocaleString()}</div>
+                      </div>
+                      <div className="info-item" style={{borderTop: '2px solid #d1d5db', paddingTop: '0.5rem', marginTop: '0.5rem'}}>
+                        <label style={{fontWeight: 'bold'}}>Gross Salary</label>
+                        <div className="value" style={{fontWeight: 'bold'}}>₹{salarySlip.gross_salary?.toLocaleString()}</div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <h4 style={{marginBottom: '1rem', color: '#374151'}}>Deductions</h4>
+                      <div className="info-item">
+                        <label>Employee PF</label>
+                        <div className="value">₹{salarySlip.pf_employee?.toLocaleString()}</div>
+                      </div>
+                      <div className="info-item">
+                        <label>Professional Tax</label>
+                        <div className="value">₹{salarySlip.professional_tax?.toLocaleString()}</div>
+                      </div>
+                      <div className="info-item" style={{borderTop: '2px solid #d1d5db', paddingTop: '0.5rem', marginTop: '0.5rem'}}>
+                        <label style={{fontWeight: 'bold'}}>Total Deductions</label>
+                        <div className="value" style={{fontWeight: 'bold'}}>₹{salarySlip.total_deductions?.toLocaleString()}</div>
+                      </div>
+                      
+                      <h4 style={{marginTop: '2rem', marginBottom: '1rem', color: '#374151'}}>Attendance</h4>
+                      <div className="info-item">
+                        <label>Present Days</label>
+                        <div className="value">{salarySlip.present_days}</div>
+                      </div>
+                      <div className="info-item">
+                        <label>Leave Days</label>
+                        <div className="value">{salarySlip.leave_days}</div>
+                      </div>
+                      <div className="info-item">
+                        <label>Payable Days</label>
+                        <div className="value">{salarySlip.payable_days} / {salarySlip.total_days}</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{marginTop: '2rem', padding: '1rem', background: '#10b981', color: 'white', borderRadius: '8px', textAlign: 'center'}}>
+                    <h3 style={{margin: 0}}>Net Salary: ₹{salarySlip.net_salary?.toLocaleString()}</h3>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Documents Tab - For All Users */}
+          {activeTab === 'documents' && (
+            <div className="tab-content">
+              <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem'}}>
+                <h3 style={{margin: 0, color: '#1f2937'}}>My Documents</h3>
+                <button className="btn btn-primary" onClick={() => setShowUpload(true)}>
+                  Upload Document
+                </button>
+              </div>
+
+              <div className="table-container">
+                <table>
+                  <thead>
+                    <tr>
+                      {isAdmin && <th>Employee</th>}
+                      <th>Document Type</th>
+                      <th>File Name</th>
+                      <th>Description</th>
+                      <th>Upload Date</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {documents.map((doc) => (
+                      <tr key={doc.id}>
+                        {isAdmin && <td>{doc.first_name} {doc.last_name}</td>}
+                        <td style={{textTransform: 'capitalize'}}>{doc.document_type}</td>
+                        <td>{doc.file_name}</td>
+                        <td>{doc.description || '-'}</td>
+                        <td>{new Date(doc.upload_date).toLocaleDateString()}</td>
+                        <td>
+                          <button 
+                            className="btn btn-secondary"
+                            style={{padding: '0.4rem 0.8rem', marginRight: '0.5rem', fontSize: '0.9rem'}}
+                            onClick={() => handleDownloadDocument(doc.id, doc.file_name)}
+                          >
+                            Download
+                          </button>
+                          <button 
+                            className="btn btn-danger"
+                            style={{padding: '0.4rem 0.8rem', fontSize: '0.9rem'}}
+                            onClick={() => handleDeleteDocument(doc.id)}
+                          >
+                            Delete
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
         </div>
+
+        {/* Upload Document Modal */}
+        {showUpload && (
+          <div className="modal-overlay" onClick={() => setShowUpload(false)}>
+            <div className="modal" onClick={(e) => e.stopPropagation()}>
+              <h2>Upload Document</h2>
+              
+              <form onSubmit={handleUploadDocument}>
+                <div className="form-group">
+                  <label>Document Type</label>
+                  <select
+                    value={uploadData.document_type}
+                    onChange={(e) => setUploadData({...uploadData, document_type: e.target.value})}
+                    required
+                  >
+                    <option value="salary">Salary Document</option>
+                    <option value="certificate">Certificate</option>
+                    <option value="profile">Profile Attachment</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+
+                <div className="form-group">
+                  <label>Description (Optional)</label>
+                  <textarea
+                    value={uploadData.description}
+                    onChange={(e) => setUploadData({...uploadData, description: e.target.value})}
+                    rows="3"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>File</label>
+                  <input
+                    type="file"
+                    onChange={(e) => setUploadData({...uploadData, file: e.target.files[0]})}
+                    required
+                  />
+                </div>
+
+                <div className="modal-actions">
+                  <button type="button" className="btn btn-secondary" onClick={() => setShowUpload(false)}>
+                    Cancel
+                  </button>
+                  <button type="submit" className="btn btn-primary">
+                    Upload
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </div>
     </>
   );
