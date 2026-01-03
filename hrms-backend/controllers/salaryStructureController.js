@@ -147,10 +147,11 @@ exports.getSalaryStructure = async (req, res) => {
     const [rows] = await db.query(
       `SELECT ss.*, 
        CONCAT(e.first_name, ' ', e.last_name) as employee_name,
-       CONCAT(u.first_name, ' ', u.last_name) as updated_by_name
+       CONCAT(ue.first_name, ' ', ue.last_name) as updated_by_name
        FROM salary_structure ss
        JOIN employees e ON ss.employee_id = e.id
        LEFT JOIN users u ON ss.updated_by = u.id
+       LEFT JOIN employees ue ON u.id = ue.user_id
        WHERE ss.employee_id = ?`,
       [employee_id]
     );
@@ -196,10 +197,11 @@ exports.getSalaryRevisionHistory = async (req, res) => {
     const [rows] = await db.query(
       `SELECT sr.*,
        CONCAT(e.first_name, ' ', e.last_name) as employee_name,
-       CONCAT(u.first_name, ' ', u.last_name) as approved_by_name
+       CONCAT(ue.first_name, ' ', ue.last_name) as approved_by_name
        FROM salary_revision sr
        JOIN employees e ON sr.employee_id = e.id
        LEFT JOIN users u ON sr.approved_by = u.id
+       LEFT JOIN employees ue ON u.id = ue.user_id
        WHERE sr.employee_id = ?
        ORDER BY sr.effective_from_date DESC`,
       [employee_id]

@@ -146,26 +146,21 @@ exports.createUser = async (req, res) => {
     const employeeId = employeeResult.insertId;
 
     const monthlyWage = 50000;
+    const yearlyWage = monthlyWage * 12;
     const basic = monthlyWage * 0.5;
     const hra = basic * 0.5;
-    const standardAllowance = 1000;
+    const stdAllowance = 1500;
     const performanceBonus = monthlyWage * 0.0833;
     const lta = monthlyWage * 0.0833;
-    const fixedAllowance = monthlyWage - (basic + hra + standardAllowance + performanceBonus + lta);
-    const employeePf = basic * 0.12;
-    const employerPf = basic * 0.12;
-
-    await db.query(
-      `INSERT INTO salary_info (employee_id, monthly_wage, yearly_wage, basic, hra, standard_allowance, performance_bonus, lta, fixed_allowance, employee_pf, employer_pf)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [employeeId, monthlyWage, monthlyWage * 12, basic, hra, standardAllowance, performanceBonus, lta, fixedAllowance, employeePf, employerPf]
-    );
+    const fixedAllowance = monthlyWage - (basic + hra + stdAllowance + performanceBonus + lta);
+    const pfEmployee = basic * 0.12;
+    const pfEmployer = basic * 0.12;
 
     // Create salary structure for the new employee
     await db.query(
-      `INSERT INTO salary_structure (employee_id, monthly_wage, basic, hra, standard_allowance, performance_bonus, lta, fixed_allowance, employee_pf, employer_pf, created_by, effective_from_date)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURDATE())`,
-      [employeeId, monthlyWage, basic, hra, standardAllowance, performanceBonus, lta, fixedAllowance, employeePf, employerPf, req.user.id]
+      `INSERT INTO salary_structure (employee_id, monthly_wage, yearly_wage, basic, hra, std_allowance, performance_bonus, lta, fixed_allowance, pf_employee, pf_employer, updated_by)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [employeeId, monthlyWage, yearlyWage, basic, hra, stdAllowance, performanceBonus, lta, fixedAllowance, pfEmployee, pfEmployer, req.user.id]
     );
 
     // Allocate default leaves

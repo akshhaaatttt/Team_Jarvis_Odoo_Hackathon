@@ -44,11 +44,18 @@ const ChangePassword = () => {
 
   return (
     <div className="login-container">
+      {/* Animated Wave Layers */}
+      <div className="wave-layer wave-layer-1"></div>
+      <div className="wave-layer wave-layer-2"></div>
+      <div className="wave-layer wave-layer-3"></div>
+      
       <div className="login-box">
-        <h2>Change Password</h2>
-        <p className="text-center mb-2" style={{color: '#6b7280'}}>
-          You must change your password before continuing
-        </p>
+        <div className="login-header">
+          <h2>Change Password</h2>
+          <p className="login-subtitle">
+            You must change your password before continuing
+          </p>
+        </div>
         
         {error && <div className="error-message">{error}</div>}
         

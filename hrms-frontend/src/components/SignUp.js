@@ -62,21 +62,25 @@ const SignUp = () => {
   };
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '2rem'
-    }}>
+    <div className="login-container">
+      {/* Animated Wave Layers */}
+      <div className="wave-layer wave-layer-1"></div>
+      <div className="wave-layer wave-layer-2"></div>
+      <div className="wave-layer wave-layer-3"></div>
+      
       <div style={{
-        background: 'white',
-        borderRadius: '12px',
-        boxShadow: '0 10px 40px rgba(0,0,0,0.1)',
+        background: 'rgba(255, 255, 255, 0.75)',
+        borderRadius: '22px',
+        boxShadow: '0 8px 32px rgba(123, 47, 247, 0.15), 0 4px 16px rgba(0, 0, 0, 0.08)',
         maxWidth: '900px',
         width: '100%',
-        padding: '2.5rem'
+        padding: '2.5rem',
+        backdropFilter: 'blur(20px) saturate(150%)',
+        WebkitBackdropFilter: 'blur(20px) saturate(150%)',
+        border: '1.5px solid rgba(199, 125, 255, 0.25)',
+        animation: 'slideUpFadeIn 500ms cubic-bezier(0.32, 0.72, 0, 1) forwards',
+        position: 'relative',
+        zIndex: 10
       }}>
         <div style={{textAlign: 'center', marginBottom: '2rem'}}>
           <h1 style={{color: '#1f2937', marginBottom: '0.5rem'}}>Join Our Team</h1>

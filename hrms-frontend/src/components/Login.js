@@ -31,41 +31,65 @@ const Login = () => {
 
   return (
     <div className="login-container">
+      {/* Animated Wave Layers */}
+      <div className="wave-layer wave-layer-1"></div>
+      <div className="wave-layer wave-layer-2"></div>
+      <div className="wave-layer wave-layer-3"></div>
+      
+      {/* Glassmorphism Login Card */}
       <div className="login-box">
-        <h2>Dayflow HRMS</h2>
+        <div className="login-header">
+          <h2>Odoo India</h2>
+          <p className="login-subtitle">Welcome back! Please login to your account.</p>
+        </div>
+        
         {error && <div className="error-message">{error}</div>}
         
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label>Login ID</label>
+        <form onSubmit={handleSubmit} className="login-form">
+          {/* Floating Label Input */}
+          <div className="form-group floating-label">
             <input
               type="text"
+              id="loginId"
               value={loginId}
               onChange={(e) => setLoginId(e.target.value)}
-              placeholder="Enter your Login ID"
+              placeholder=""
               required
+              className="floating-input"
             />
+            <label htmlFor="loginId" className="floating-label-text">Login ID</label>
+            <div className="input-border-glow"></div>
           </div>
 
-          <div className="form-group">
-            <label>Password</label>
+          {/* Floating Label Input */}
+          <div className="form-group floating-label">
             <input
               type="password"
+              id="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter your password"
+              placeholder=""
               required
+              className="floating-input"
             />
+            <label htmlFor="password" className="floating-label-text">Password</label>
+            <div className="input-border-glow"></div>
           </div>
 
-          <button type="submit" className="btn btn-primary" disabled={loading}>
-            {loading ? 'Logging in...' : 'Login'}
+          {/* Animated Button with Ripple */}
+          <button 
+            type="submit" 
+            className="btn btn-primary login-button" 
+            disabled={loading}
+          >
+            <span className="button-text">{loading ? 'Logging in...' : 'Login'}</span>
+            <div className="button-ripple"></div>
           </button>
         </form>
 
-        <p style={{textAlign: 'center', marginTop: '1.5rem', color: '#6b7280'}}>
-          Don't have an account? <a href="/signup" style={{color: '#667eea', textDecoration: 'none', fontWeight: '600'}}>Sign up here</a>
-        </p>
+        <div className="login-footer">
+          <p>Don't have an account? <a href="/signup" className="signup-link">Sign up here</a></p>
+        </div>
       </div>
     </div>
   );
