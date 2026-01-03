@@ -1,0 +1,65 @@
+# Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.production
+
+# Build outputs
+build/
+dist/
+*.tsbuildinfo
+
+# Frontend
+hrms-frontend/build/
+hrms-frontend/.env
+hrms-frontend/.env.local
+
+# Backend
+hrms-backend/.env
+
+# Logs
+logs/
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Uploads (user-generated content)
+hrms-backend/uploads/documents/*
+hrms-backend/uploads/profile-pictures/*
+hrms-backend/uploads/leave-attachments/*
+!hrms-backend/uploads/documents/.gitkeep
+!hrms-backend/uploads/profile-pictures/.gitkeep
+!hrms-backend/uploads/leave-attachments/.gitkeep
+
+# Database
+*.sql.backup
+*.db
+
+# Testing
+coverage/
+.nyc_output/
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
